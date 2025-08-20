@@ -1,0 +1,33 @@
+/* Basic Styling */
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin: 20px;
+}
+
+/* Game Board (grid layout for cards) */
+#game-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 10px;
+  max-width: 500px;
+  margin: 20px auto;
+}
+
+/* Each Card */
+.card {
+  background: lightblue;
+  border: 2px solid #333;
+  border-radius: 8px;
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.card:hover {
+  background: deepskyblue;
+}

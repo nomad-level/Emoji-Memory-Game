@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emoji Memory Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Game Title -->
+  <h1>🧠 Emoji Memory Game</h1>
+
+  <!-- Game Controls (Theme + Difficulty + Start button) -->
+  <label for="theme">Theme:</label>
+  <select id="theme">
+    <option value="faces">Faces</option>
+    <option value="animals">Animals</option>
+    <option value="food">Food</option>
+  </select>
+
+  <label for="difficulty">Difficulty:</label>
+  <select id="difficulty">
+    <option value="easy">Easy (6 pairs)</option>
+    <option value="normal">Normal (12 pairs)</option>
+    <option value="hard">Hard (18 pairs)</option>
+  </select>
+
+  <button id="startBtn">Start / Restart</button>
+
+  <!-- Stats (moves + timer) -->
+  <p id="moves">Moves: 0</p>
+  <p id="timer">Time: 0 sec</p>
+
+  <!-- Game Board (cards will appear here) -->
+  <div id="game-board"></div>
+
+  <!-- Instructions -->
+  <details>
+    <summary>How to play</summary>
+    <p>Flip two cards at a time to find a matching pair. Match all pairs to win!</p>
+  </details>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
