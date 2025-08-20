@@ -21,8 +21,8 @@ function shuffle(array) {
 function resetStats() {
   moves = 0;
   seconds = 0;
-  document.getElementById("moves").textContent = "Moves: 0";
-  document.getElementById("timer").textContent = "Time: 0 sec";
+  document.getElementById("moves").textContent = "0";
+  document.getElementById("time").textContent = "0";
   if (timer) clearInterval(timer); // stop any old timer
 }
 
@@ -30,7 +30,7 @@ function resetStats() {
 function startTimer() {
   timer = setInterval(() => {
     seconds++;
-    document.getElementById("timer").textContent = `Time: ${seconds} sec`;
+    document.getElementById("time").textContent = `${seconds}`;
   }, 1000);
 }
 
@@ -42,6 +42,9 @@ function startTimer() {
 function createBoard(theme, difficulty) {
   const board = document.getElementById("game-board");
   board.innerHTML = ""; // clear previous game
+
+  // Set grid class for difficulty
+  board.className = "game-board " + difficulty;
 
   resetStats(); // reset stats when board is created
 
@@ -60,12 +63,29 @@ function createBoard(theme, difficulty) {
   // Start timer
   startTimer();
 
-  // Create each card element
+  // Create each card element (as button with inner divs for flip effect)
   gameEmojis.forEach((emoji) => {
-    const card = document.createElement("div");
-    card.classList.add("card");
-    card.dataset.emoji = emoji;
-    card.textContent = "❓"; // hidden side of card
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "card";
+    card.setAttribute("aria-label", "Hidden card");
+    card.setAttribute("role", "gridcell");
+
+    const inner = document.createElement("div");
+    inner.className = "card-inner";
+
+    const front = document.createElement("div");
+    front.className = "card-face card-front";
+    front.textContent = emoji;
+
+    const back = document.createElement("div");
+    back.className = "card-face card-back";
+    back.textContent = "❓";
+
+    inner.appendChild(front);
+    inner.appendChild(back);
+    card.appendChild(inner);
+
     card.addEventListener("click", flipCard);
     board.appendChild(card);
   });
@@ -78,51 +98,42 @@ function createBoard(theme, difficulty) {
 // Function to handle flipping a card
 function flipCard() {
   if (lockBoard) return; // prevents clicking while checking match
-  if (this === firstCard) return; // prevents double click
+  if (this.classList.contains("flipped") || this.classList.contains("matched")) return;
 
-  this.textContent = this.dataset.emoji; // reveal emoji
+  this.classList.add("flipped");
 
   if (!firstCard) {
-    // if no card selected, this becomes first card
     firstCard = this;
     return;
   }
 
-  // otherwise, this is second card
   secondCard = this;
+  lockBoard = true;
   moves++;
-  document.getElementById("moves").textContent = `Moves: ${moves}`;
+  document.getElementById("moves").textContent = `${moves}`;
 
   checkMatch();
 }
 
 // Check if two flipped cards match
 function checkMatch() {
-  const isMatch = firstCard.dataset.emoji === secondCard.dataset.emoji;
+  const a = firstCard.querySelector(".card-front").textContent;
+  const b = secondCard.querySelector(".card-front").textContent;
+  const isMatch = a === b;
 
   if (isMatch) {
-    disableCards(); // leave them revealed
-  } else {
-    unflipCards();  // flip them back over
-  }
-}
-
-// Disable matched cards (remove click event)
-function disableCards() {
-  firstCard.removeEventListener("click", flipCard);
-  secondCard.removeEventListener("click", flipCard);
-
-  resetTurn();
-}
-
-// Flip cards back after short delay if not match
-function unflipCards() {
-  lockBoard = true;
-  setTimeout(() => {
-    firstCard.textContent = "❓";
-    secondCard.textContent = "❓";
+    firstCard.classList.add("matched");
+    secondCard.classList.add("matched");
+    firstCard.setAttribute("aria-label", "Matched card");
+    secondCard.setAttribute("aria-label", "Matched card");
     resetTurn();
-  }, 1000);
+  } else {
+    setTimeout(() => {
+      firstCard.classList.remove("flipped");
+      secondCard.classList.remove("flipped");
+      resetTurn();
+    }, 900);
+  }
 }
 
 // Reset for next turn
@@ -135,7 +146,7 @@ function resetTurn() {
 // ========================
 
 // When "Start / Restart" is clicked
-document.getElementById("startBtn").addEventListener("click", () => {
+document.getElementById("start-btn").addEventListener("click", () => {
   const theme = document.getElementById("theme").value;
   const difficulty = document.getElementById("difficulty").value;
   createBoard(theme, difficulty);
