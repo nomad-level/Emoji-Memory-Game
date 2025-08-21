@@ -46,23 +46,16 @@ h1 {
 
 #game-board {
   display: grid;
-  grid-template-columns: repeat(6, 60px);
-  grid-gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 16px;
   justify-content: center;
+  align-items: center;
   margin: 32px auto 24px auto;
   min-height: 140px;
+  max-width: 700px;
 }
 
-/* Difficulty grid sizes */
-.easy {
-  grid-template-columns: repeat(3, 60px);
-}
-.normal {
-  grid-template-columns: repeat(6, 60px);
-}
-.hard {
-  grid-template-columns: repeat(9, 60px);
-}
+/* Remove fixed difficulty grid sizes for more even layout */
 
 .card {
   width: 60px;

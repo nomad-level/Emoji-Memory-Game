@@ -43,8 +43,7 @@ function createBoard(theme, difficulty) {
   const board = document.getElementById("game-board");
   board.innerHTML = ""; // clear previous game
 
-  // Set grid class for difficulty
-  board.className = "game-board " + difficulty;
+  board.className = "game-board";
 
   resetStats(); // reset stats when board is created
 
@@ -60,8 +59,14 @@ function createBoard(theme, difficulty) {
   // Duplicate + Shuffle
   let gameEmojis = shuffle([...selected, ...selected]);
 
-  // Start timer
-  startTimer();
+  // Set fixed columns for each difficulty
+  let columns = 4; // default for easy
+  if (difficulty === "normal") columns = 6;
+  if (difficulty === "hard") columns = 6;
+  board.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+
+  // Timer will start on first card flip
+  window._timerStarted = false;
 
   // Create each card element (as button with inner divs for flip effect)
   gameEmojis.forEach((emoji) => {
@@ -99,6 +104,12 @@ function createBoard(theme, difficulty) {
 function flipCard() {
   if (lockBoard) return; // prevents clicking while checking match
   if (this.classList.contains("flipped") || this.classList.contains("matched")) return;
+
+  // Start timer on first card flip
+  if (!window._timerStarted) {
+    startTimer();
+    window._timerStarted = true;
+  }
 
   this.classList.add("flipped");
 
