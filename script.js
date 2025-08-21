@@ -127,6 +127,13 @@ function checkMatch() {
     firstCard.setAttribute("aria-label", "Matched card");
     secondCard.setAttribute("aria-label", "Matched card");
     resetTurn();
+
+    // Check if all pairs are matched
+    const matchedCards = document.querySelectorAll('.card.matched').length;
+    const totalPairs = document.querySelectorAll('.card').length / 2;
+    if (matchedCards === totalPairs * 2) {
+      if (timer) clearInterval(timer);
+    }
   } else {
     setTimeout(() => {
       firstCard.classList.remove("flipped");
