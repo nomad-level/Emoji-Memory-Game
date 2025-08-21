@@ -1,159 +1,171 @@
+/* ========= Reset / Base ========= */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
 body {
-  background: #f7f8fa;
-  font-family: 'Segoe UI', Arial, sans-serif;
-  color: #222;
   margin: 0;
-  padding: 0;
-  text-align: center;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: #f4f6f8;
+  color: #222;
 }
 
-h1 {
-  margin-top: 32px;
-  font-size: 2.5rem;
-}
 
 .container {
-  max-width: 700px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 24px;
-}
-
-#controls {
-  margin: 24px 0 16px 0;
+  padding: 24px 16px 48px;
   display: flex;
-  justify-content: center;
-  gap: 16px;
+  flex-direction: column;
   align-items: center;
 }
 
-#start-btn {
+
+h1 { margin: 8px 0 16px; }
+
+
+/* ========= Controls / Stats ========= */
+#controls, #stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+
+#controls select, #controls button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cfd8dc;
+  background: #fff;
+  font-size: 0.95rem;
+}
+
+
+#controls button {
   background: #2e7d32;
   color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 8px 20px;
-  font-size: 1rem;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: transform 0.08s ease, opacity 0.2s ease;
 }
-#start-btn:hover {
-  background: #388e3c;
-}
+#controls button:hover { opacity: 0.95; }
+#controls button:active { transform: scale(0.98); }
 
-#stats {
-  margin-bottom: 16px;
-}
 
-#game-board {
+/* ========= Board Grid ========= */
+.game-board {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-  gap: 16px;
+  gap: 12px;
   justify-content: center;
-  align-items: center;
-  margin: 32px auto 24px auto;
-  min-height: 140px;
-  max-width: 700px;
+  margin-top: 16px;
 }
 
-/* Remove fixed difficulty grid sizes for more even layout */
 
+/* Grid templates & card sizing per difficulty */
+#game-board.easy   { grid-template-columns: repeat(3, 110px); }
+#game-board.normal { grid-template-columns: repeat(6, 96px); }
+#game-board.hard   { grid-template-columns: repeat(6, 86px); }
+
+
+#game-board.easy .card   { width: 110px; height: 110px; }
+#game-board.normal .card { width: 96px;  height: 96px;  }
+#game-board.hard .card   { width: 86px;  height: 86px;  }
+
+
+/* ========= Card + 3D Flip ========= */
 .card {
-  width: 60px;
-  height: 80px;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  border: 2px solid #e0e0e0;
+  perspective: 1000px;
   cursor: pointer;
-  position: relative;
-  perspective: 600px;
-  padding: 0;
-  outline: none;
+  user-select: none;
+  border-radius: 10px; /* outer corner smoothing */
 }
 
+
+/* Inner element actually flips */
 .card-inner {
+  position: relative;
   width: 100%;
   height: 100%;
-  transition: transform 0.4s cubic-bezier(.4,2,.3,1);
+  border-radius: 10px;
   transform-style: preserve-3d;
-  position: relative;
+  transition: transform 0.6s ease;
 }
+
+
+/* flip state */
 .card.flipped .card-inner,
 .card.matched .card-inner {
   transform: rotateY(180deg);
 }
 
+
 .card-face {
   position: absolute;
-  width: 100%;
-  height: 100%;
+  inset: 0;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
   backface-visibility: hidden;
-  border-radius: 10px;
+  font-size: 2rem;
+  border: 2px solid #cfd8dc;
 }
+
+
+/* Back (hidden) */
+.card-back {
+  background: #2c3e50;    /* dark for strong contrast */
+  color: #fff;
+}
+
+
+/* Front (emoji) */
 .card-front {
-  background: #fff;
-  color: #222;
+  background: #ffffff;
+  color: #111;
   transform: rotateY(180deg);
 }
-.card-back {
-  background: #e0e0e0;
-  color: #888;
+
+
+/* Matched look */
+.card.matched .card-front {
+  background: #2e7d32;   /* accessible green */
+  color: #fff;
+  border-color: #2e7d32;
+  font-weight: 700;
 }
 
-.card.matched {
-  border: 2px solid #388e3c;
-  box-shadow: 0 0 0 2px #388e3c;
-}
 
+/* ========= Message / Instructions ========= */
 .message {
-  font-size: 1.2rem;
-  color: #2e7d32;
-  margin: 16px 0;
+  margin-top: 16px;
+  font-weight: 700;
+  color: #1b5e20;
+  min-height: 1.5em; /* keep layout from jumping */
 }
+
 
 .instructions {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  padding: 16px;
-  max-width: 500px;
-  margin: 0 auto 24px auto;
-  text-align: left;
-}
-/* Basic Styling */
-body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  margin: 20px;
+  margin-top: 10px;
+  width: 100%;
+  max-width: 760px;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 10px 14px;
 }
 
-/* Game Board (grid layout for cards) */
-#game-board {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-  gap: 10px;
-  max-width: 500px;
-  margin: 20px auto;
-}
 
-/* Each Card */
-.card {
-  background: lightblue;
-  border: 2px solid #333;
-  border-radius: 8px;
-  font-size: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 80px;
-  cursor: pointer;
-  user-select: none;
-}
+/* ========= Small screens ========= */
+@media (max-width: 540px) {
+  #game-board.normal { grid-template-columns: repeat(4, 72px); }
+  #game-board.hard   { grid-template-columns: repeat(6, 64px); }
 
-.card:hover {
-  background: deepskyblue;
+
+  #game-board.normal .card { width: 72px; height: 72px; }
+  #game-board.hard .card   { width: 64px; height: 64px; }
+
+
+  .card-face { font-size: 1.6rem; }
 }

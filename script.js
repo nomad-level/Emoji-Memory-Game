@@ -1,151 +1,172 @@
-// ========================
-// Global Variables
-// ========================
-let firstCard = null;       // first card flipped
-let secondCard = null;      // second card flipped
-let lockBoard = false;      // prevents clicking too fast
-let moves = 0;              // counts how many turns taken
-let timer = null;           // stores the timer interval
-let seconds = 0;            // how long player has played
+// ========= DOM Elements =========
+const gameBoard = document.getElementById("game-board");
+const themeSelect = document.getElementById("theme");
+const difficultySelect = document.getElementById("difficulty");
+const startBtn = document.getElementById("start-btn");
+const message = document.getElementById("message");
+const movesEl = document.getElementById("moves");
+const timeEl = document.getElementById("time");
 
-// ========================
-// Utility Functions
-// ========================
 
-// Shuffle an array randomly (used for shuffling emojis)
-function shuffle(array) {
-  return array.sort(() => 0.5 - Math.random());
-}
+// ========= Game State =========
+let firstCard = null;
+let secondCard = null;
+let lockBoard = false;
+let matches = 0;
+let totalPairs = 0;
 
-// Reset stats before a new game
-function resetStats() {
+
+let moves = 0;
+let time = 0;
+let timerId = null;
+
+
+// ========= Events =========
+startBtn.addEventListener("click", startGame);
+
+
+// ========= Start / Restart =========
+function startGame() {
+  // Reset UI state
+  gameBoard.innerHTML = "";
+  message.textContent = "";
   moves = 0;
-  seconds = 0;
-  document.getElementById("moves").textContent = "0";
-  document.getElementById("time").textContent = "0";
-  if (timer) clearInterval(timer); // stop any old timer
-}
+  time = 0;
+  updateMoves(0);
+  updateTime(0);
+  stopTimer();
+  firstCard = null;
+  secondCard = null;
+  lockBoard = false;
+  matches = 0;
 
-// Start the game timer (counts seconds)
-function startTimer() {
-  timer = setInterval(() => {
-    seconds++;
-    document.getElementById("time").textContent = `${seconds}`;
-  }, 1000);
-}
 
-// ========================
-// Board Setup
-// ========================
+  // Difficulty -> pairs & board class
+  const difficulty = difficultySelect.value; // "easy" | "normal" | "hard"
+  const pairsByDifficulty = {
+    easy: 6,
+    normal: 12,
+    hard: 18
+  };
+  totalPairs = pairsByDifficulty[difficulty] || 12;
 
-// Create the game board (cards)
-function createBoard(theme, difficulty) {
-  const board = document.getElementById("game-board");
-  board.innerHTML = ""; // clear previous game
 
-  board.className = "game-board";
+  // Apply difficulty class to board
+  gameBoard.className = "game-board " + difficulty;
 
-  resetStats(); // reset stats when board is created
 
-  // Pick emojis from chosen theme
-  let chosenEmojis = [...emojiThemes[theme]];
+  // Prepare deck from chosen theme
+  const theme = themeSelect.value; // "faces" | "animals" | "food"
+  let symbols = getSymbols(theme);
 
-  // Set number of pairs based on difficulty
-  let numPairs = difficulty === "easy" ? 6 : difficulty === "normal" ? 12 : 18;
 
-  // Slice the emojis to the correct difficulty size
-  let selected = chosenEmojis.slice(0, numPairs);
-
-  // Duplicate + Shuffle
-  let gameEmojis = shuffle([...selected, ...selected]);
-
-  // Set fixed columns for each difficulty
-  let columns = 4; // default for easy
-  if (difficulty === "normal") columns = 6;
-  if (difficulty === "hard") columns = 6;
-  board.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
-
-  // Timer will start on first card flip
-  window._timerStarted = false;
-
-  // Create each card element (as button with inner divs for flip effect)
-  gameEmojis.forEach((emoji) => {
-    const card = document.createElement("button");
-    card.type = "button";
-    card.className = "card";
-    card.setAttribute("aria-label", "Hidden card");
-    card.setAttribute("role", "gridcell");
-
-    const inner = document.createElement("div");
-    inner.className = "card-inner";
-
-    const front = document.createElement("div");
-    front.className = "card-face card-front";
-    front.textContent = emoji;
-
-    const back = document.createElement("div");
-    back.className = "card-face card-back";
-    back.textContent = "❓";
-
-    inner.appendChild(front);
-    inner.appendChild(back);
-    card.appendChild(inner);
-
-    card.addEventListener("click", flipCard);
-    board.appendChild(card);
-  });
-}
-
-// ========================
-// Card Flip + Match Logic
-// ========================
-
-// Function to handle flipping a card
-function flipCard() {
-  if (lockBoard) return; // prevents clicking while checking match
-  if (this.classList.contains("flipped") || this.classList.contains("matched")) return;
-
-  // Start timer on first card flip
-  if (!window._timerStarted) {
-    startTimer();
-    window._timerStarted = true;
+  // Safety: ensure we have enough uniques
+  if (symbols.length < totalPairs) {
+    // If not enough, just reuse from start (rare with our lists)
+    while (symbols.length < totalPairs) {
+      symbols = symbols.concat(getSymbols(theme));
+      symbols = [...new Set(symbols)]; // keep uniques
+    }
   }
 
-  this.classList.add("flipped");
+
+  const chosen = symbols.slice(0, totalPairs);
+  const deck = shuffle([...chosen, ...chosen]); // duplicate + shuffle
+
+
+  // Render cards
+  deck.forEach(sym => gameBoard.appendChild(createCard(sym)));
+}
+
+
+// ========= Card Factory =========
+function createCard(symbol) {
+  const card = document.createElement("button");
+  card.type = "button";
+  card.className = "card";
+  card.setAttribute("aria-label", "Hidden card");
+  card.setAttribute("role", "gridcell");
+
+
+  const inner = document.createElement("div");
+  inner.className = "card-inner";
+
+
+  const front = document.createElement("div");
+  front.className = "card-face card-front";
+  front.textContent = symbol;
+
+
+  const back = document.createElement("div");
+  back.className = "card-face card-back";
+  back.textContent = "❓";
+
+
+  inner.appendChild(front);
+  inner.appendChild(back);
+  card.appendChild(inner);
+
+
+  card.addEventListener("click", () => onCardClick(card));
+  return card;
+}
+
+
+// ========= Interaction =========
+function onCardClick(card) {
+  if (lockBoard) return;
+  if (card.classList.contains("flipped") || card.classList.contains("matched")) return;
+
+
+  // Start timer on first flip
+  if (!timerId) startTimer();
+
+
+  card.classList.add("flipped");
+
 
   if (!firstCard) {
-    firstCard = this;
+    firstCard = card;
     return;
   }
 
-  secondCard = this;
-  lockBoard = true;
-  moves++;
-  document.getElementById("moves").textContent = `${moves}`;
 
-  checkMatch();
+  secondCard = card;
+  lockBoard = true; // block extra clicks during check
+
+
+  // Count a move once the second card is flipped
+  updateMoves(moves + 1);
+
+
+  checkForMatch();
 }
 
-// Check if two flipped cards match
-function checkMatch() {
+
+function checkForMatch() {
   const a = firstCard.querySelector(".card-front").textContent;
   const b = secondCard.querySelector(".card-front").textContent;
-  const isMatch = a === b;
 
-  if (isMatch) {
+
+  if (a === b) {
+    // Match!
     firstCard.classList.add("matched");
     secondCard.classList.add("matched");
     firstCard.setAttribute("aria-label", "Matched card");
     secondCard.setAttribute("aria-label", "Matched card");
+
+
+    matches++;
     resetTurn();
 
-    // Check if all pairs are matched
-    const matchedCards = document.querySelectorAll('.card.matched').length;
-    const totalPairs = document.querySelectorAll('.card').length / 2;
-    if (matchedCards === totalPairs * 2) {
-      if (timer) clearInterval(timer);
+
+    // Win?
+    if (matches === totalPairs) {
+      stopTimer();
+      message.textContent = `🎉 You win in ${moves} moves and ${time} seconds!`;
     }
   } else {
+    // Not a match: flip back after a delay
     setTimeout(() => {
       firstCard.classList.remove("flipped");
       secondCard.classList.remove("flipped");
@@ -154,18 +175,49 @@ function checkMatch() {
   }
 }
 
-// Reset for next turn
+
 function resetTurn() {
-  [firstCard, secondCard, lockBoard] = [null, null, false];
+  [firstCard, secondCard] = [null, null];
+  lockBoard = false;
 }
 
-// ========================
-// Event Listeners
-// ========================
 
-// When "Start / Restart" is clicked
-document.getElementById("start-btn").addEventListener("click", () => {
-  const theme = document.getElementById("theme").value;
-  const difficulty = document.getElementById("difficulty").value;
-  createBoard(theme, difficulty);
-});
+// ========= Stats =========
+function updateMoves(n) {
+  moves = n;
+  movesEl.textContent = String(moves);
+}
+
+
+function startTimer() {
+  if (timerId) return;
+  timerId = setInterval(() => {
+    time++;
+    updateTime(time);
+  }, 1000);
+}
+
+
+function stopTimer() {
+  if (timerId) {
+    clearInterval(timerId);
+    timerId = null;
+  }
+}
+
+
+function updateTime(n) {
+  timeEl.textContent = String(n);
+}
+
+
+// ========= Utils =========
+// Fisher–Yates shuffle (stable, unbiased)
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
